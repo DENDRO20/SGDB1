@@ -176,3 +176,103 @@ CREATE USER user1 FOR LOGIN Eugeniu
 
 CREATE ROLE DadaBaser
 GRANT DadaBaser TO user1
+
+IF OBJECT_ID('scalar1') is not null
+   	DROP FUNCTION scalar1
+GO
+CREATE FUNCTION scalar1()
+RETURNS CHAR(20)
+AS
+	BEGIN
+		RETURN (SELECT Nume FROM Angajati 
+		WHERE Salariu = (SELECT MAX(Salariu) FROM Angajati))
+	END
+
+	PRINT dbo.scalar1()
+
+IF OBJECT_ID('table1') is not null    
+   	DROP FUNCTION table1
+GO
+CREATE FUNCTION table1()
+RETURNS TABLE
+AS
+    	RETURN (SELECT * FROM Sarcini WHERE YEAR(DataFinalTask) < 2023)
+GO
+
+SELECT * FROM table1()
+
+
+DROP FUNCTION IF EXISTS multi 
+CREATE FUNCTION multi(@Id_client INT)
+RETURNS @tabel TABLE(IdClient INT, zile INT)
+AS 
+	BEGIN
+		RETURN
+   	INSERT @tabel
+   	SELECT ID_Client, DATEDIFF(d, DataStartTask, DataFinalTask)
+   	FROM Clienti c JOIN Sarcini s ON c.ID_Client = s.ClientID
+   	WHERE c.ID_Client =@Id_client
+	RETURN
+	END
+	
+	SELECT * FROM dbo.multi(15)
+
+--Crearea a 2 sinonime.
+CREATE SYNONYM syn1  
+FOR Parinti.Nume_intretinut; 
+
+CREATE SYNONYM syn2
+FOR Parinti.Nume;
+
+--Crearea unei scheme si mutarea unor obiecte create în ea
+CREATE SCHEMA BestSchema
+
+ALTER SCHEMA BestSchema TRANSFER Parinti
+ALTER SCHEMA BestSchema TRANSFER Dat	e_personal
+ALTER SCHEMA BestSchema TRANSFER Date_departament
+
+
+--Crearea unei proceduri de schimbare a datelor
+CREATE PROCEDURE Adauga_data
+@pret_primire INT AS
+BEGIN
+UPDATE imprimante
+SET pret_primire=@pret_primire, venit=@pret_primire*0.15, TVA=@pret_primire*0.18
+END
+
+EXEC Adauga_col
+EXEC Adauga_data 100
+SELECT * FROM imprimante
+
+
+--Functie care returneaza un tabel cu careva date
+IF OBJECT_ID('table1') is not null    
+   	DROP FUNCTION table1
+GO
+CREATE FUNCTION table1()
+RETURNS TABLE
+AS
+    	RETURN (SELECT * FROM Sarcini WHERE YEAR(DataFinalTask) < 2023)
+GO
+
+
+CREATE LOGIN Eugeniu WITH PASSWORD='parola1'
+CREATE USER user1 FOR LOGIN Eugeniu
+
+CREATE ROLE DadaBaser
+GRANT DadaBaser TO user1
+
+CREATE INDEX i1
+ON pc_uri(Cod, Model, Viteza, Ram, Hd, Cd, Pret)
+
+--Crearea unei tranzactii de actualizare a datelor 
+BEGIN TRANSACTION Tran4
+UPDATE Angajati
+SET Taxe_retinute = Salariu_calculat * 0.18
+SAVE TRANSACTION s2
+UPDATE Angajati
+SET Salariu_achitat = Salariu_calculat - Taxe_retinute
+SAVE TRANSACTION s3
+COMMIT TRANSACTION Tran4
+
+
